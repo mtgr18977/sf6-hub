@@ -1,0 +1,14 @@
+{
+  "name": "sf6-hub",
+  "version": "1.0.0",
+  "description": "Street Fighter 6 Hub - Frame Data, Combos, and Matchups",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "playwright": "^1.58.0"
+  }
+}
