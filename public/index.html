@@ -6,12 +6,37 @@
   <title id="page-title">Street Fighter 6 Hub — Referência Completa</title>
   <style>
     :root {
-      --bg: #0f1724;
-      --card: #0b1220;
-      --muted: #b0bac9;
-      --accent: #4fd1c5;
-      --glass: rgba(255, 255, 255, 0.03);
-      --text: #f5f8fa;
+      --bg: #0b1020;
+      --card: #121a2c;
+      --card-raised: #18233a;
+      --muted: #9aa8bd;
+      --accent: #ff6b4a;
+      --accent-strong: #ff9a62;
+      --accent-soft: rgba(255, 107, 74, 0.14);
+      --glass: rgba(255, 255, 255, 0.045);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f7f8fb;
+      --success: #55d6be;
+      --warning: #f6c85f;
+      --danger: #ff7b7b;
+      color-scheme: dark;
+    }
+
+    html[data-theme="light"] {
+      --bg: #f4f6fa;
+      --card: #ffffff;
+      --card-raised: #eef2f7;
+      --muted: #5f6b7a;
+      --accent: #d94d32;
+      --accent-strong: #a93722;
+      --accent-soft: rgba(217, 77, 50, 0.11);
+      --glass: rgba(22, 35, 58, 0.045);
+      --line: rgba(22, 35, 58, 0.13);
+      --text: #16233a;
+      --success: #087f6b;
+      --warning: #9b6b00;
+      --danger: #bd3434;
+      color-scheme: light;
     }
     
     * {
@@ -442,6 +467,42 @@
     .feature-card:hover { transform: translateY(-2px); }
     .feature-card > div:first-child { font-size: 30px !important; margin-bottom: 12px !important; opacity: .8; }
 
+    /* P1/P2 visual system: warm arcade accent, calm surfaces, explicit theme states */
+    body {
+      background: radial-gradient(circle at 8% 0%, var(--accent-soft), transparent 28%), var(--bg);
+      transition: background .2s ease, color .2s ease;
+    }
+    header, nav.sidebar, main, .modal-content, .feature-card, .combo-card {
+      border-color: var(--line);
+    }
+    header { background: color-mix(in srgb, var(--bg) 92%, transparent); }
+    main { background: linear-gradient(180deg, var(--glass), transparent); }
+    .feature-card, .combo-card { background: color-mix(in srgb, var(--card) 88%, transparent); }
+    .feature-card:hover, .combo-card:hover { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+    .toc a:hover, .toc a.active { background: var(--accent-soft); color: var(--accent-strong); }
+    .toc a.active { box-shadow: inset 3px 0 var(--accent); }
+    button, select, input { font: inherit; }
+    .global-search {
+      display: flex; align-items: center; gap: 7px; width: min(260px, 24vw); min-height: 36px;
+      padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass); color: var(--muted);
+    }
+    .global-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 13px; }
+    .global-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+    #theme-toggle {
+      display: inline-flex; align-items: center; gap: 7px; min-height: 36px;
+      padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--glass); color: var(--text); cursor: pointer; font-size: 13px;
+    }
+    #theme-toggle:hover { border-color: var(--accent); background: var(--accent-soft); }
+    #theme-toggle .theme-icon { color: var(--accent); font-size: 15px; }
+    #home-title { background: linear-gradient(135deg, var(--accent), var(--accent-strong)) !important; }
+    #home .feature-card > div:last-child { color: var(--accent) !important; }
+    .combo-card .combo-notation { color: var(--accent-strong); background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 22%, transparent); }
+    .modal-table .hl-plus { color: var(--success); }
+    .modal-table .hl-minus { color: var(--danger); }
+    html[data-theme="light"] header { box-shadow: 0 10px 30px rgba(22,35,58,.08); }
+    html[data-theme="light"] .modal-overlay { background: rgba(22,35,58,.42); }
+    html[data-theme="light"] select option { background: var(--card) !important; }
     @media (max-width: 880px) {
       header {
         padding: 14px 16px;
@@ -454,6 +515,8 @@
       }
 
       #dynamic-loading-text { display: none; }
+      .global-search { order: 3; width: 100%; }
+      header > div:last-child { flex-wrap: wrap; }
       #lang-selector { min-height: 36px; }
 
       nav.sidebar {
@@ -523,6 +586,8 @@
     </div>
     <div style="margin-left:auto;display:flex;gap:12px;align-items:center">
       <span id="dynamic-loading-text" style="color:var(--muted);font-size:13px">Carregamento dinâmico otimizado</span>
+      <label class="global-search" for="global-search"><span aria-hidden="true">⌕</span><input id="global-search" type="search" placeholder="Buscar personagem ou ferramenta" autocomplete="off" /></label>
+      <button id="theme-toggle" type="button" aria-label="Alternar tema" aria-pressed="false"><span class="theme-icon" aria-hidden="true">☾</span><span class="theme-label">Dark</span></button>
       <select id="lang-selector" style="background:rgba(255,255,255,0.1);color:var(--text);border:1px solid rgba(255,255,255,0.2);padding:4px 8px;border-radius:6px;font-size:13px;cursor:pointer">
         <option value="pt-BR">PT</option>
         <option value="en">EN</option>
@@ -919,5 +984,40 @@
 
     console.log('✅ SF6 Hub carregado! Use a barra lateral para navegar.');
   </script>
-</body>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const button = document.getElementById('theme-toggle');
+      if (!button) return;
+      const label = button.querySelector('.theme-label');
+      const icon = button.querySelector('.theme-icon');
+      const applyTheme = (theme) => {
+        const isLight = theme === 'light';
+        root.dataset.theme = isLight ? 'light' : 'dark';
+        button.setAttribute('aria-pressed', String(isLight));
+        label.textContent = isLight ? 'Light' : 'Dark';
+        icon.textContent = isLight ? '☀' : '☾';
+      };
+      applyTheme(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      button.addEventListener('click', () => applyTheme(root.dataset.theme === 'light' ? 'dark' : 'light'));
+
+      const search = document.getElementById('global-search');
+      const routes = [
+        ['home', 'início home começo'], ['frame-calculator', 'calculadora cálculo frames vantagem punish'],
+        ['combos', 'combos combo personagem'], ['matchup-helper', 'matchup confronto adversário'],
+        ['frame-data', 'frame data golpe startup on block'], ['glossary', 'glossário termos guia']
+      ];
+      search?.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return;
+        const query = search.value.trim().toLowerCase();
+        if (!query) return;
+        const match = routes.find(([, terms]) => terms.includes(query) || terms.split(' ').some(term => term.startsWith(query)));
+        if (!match) { search.setAttribute('aria-invalid', 'true'); return; }
+        search.removeAttribute('aria-invalid');
+        document.querySelector(`[data-section="${match[0]}"]`)?.click();
+        search.blur();
+      });
+    })();
+  </script>
+  </body>
 </html>
