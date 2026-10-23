@@ -184,22 +184,22 @@ const ContentTemplates = {
 
       <div class="term" data-term="neutral" data-core="true">
         <div class="left"><h3>Neutral</h3><p>${currentLang === 'pt-BR' ? 'Situação onde nenhum jogador tem vantagem — ambos buscam criar oportunidades.' : 'Situation where neither player has advantage — both seek to create opportunities.'}</p></div>
-        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
+        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy" type="button" aria-label="${currentLang === 'pt-BR' ? 'Copiar termo' : 'Copy term'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
       </div>
 
       <div class="term" data-term="okizeme oki" data-core="true">
         <div class="left"><h3>Okizeme (Oki)</h3><p>${currentLang === 'pt-BR' ? 'Pressão aplicada quando o oponente está levantando após knockdown.' : 'Pressure applied when the opponent is waking up after a knockdown.'}</p></div>
-        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
+        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy" type="button" aria-label="${currentLang === 'pt-BR' ? 'Copiar termo' : 'Copy term'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
       </div>
 
       <div class="term" data-term="meaty" data-core="true">
         <div class="left"><h3>Meaty</h3><p>${currentLang === 'pt-BR' ? 'Golpe que acerta o oponente nos primeiros frames ao levantar, dando vantagem extra.' : 'Attack that hits the opponent on their very first wake-up frames, granting extra advantage.'}</p></div>
-        <div class="controls"><button class="copy">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
+        <div class="controls"><button class="copy" type="button" aria-label="${currentLang === 'pt-BR' ? 'Copiar termo' : 'Copy term'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
       </div>
 
       <div class="term" data-term="shimmy" data-core="true">
         <div class="left"><h3>Shimmy</h3><p>${currentLang === 'pt-BR' ? 'Caminhar para trás após pressão para baitar throw tech e punir.' : 'Walking backward after pressure to bait a throw tech and punish.'}</p></div>
-        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
+        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy" type="button" aria-label="${currentLang === 'pt-BR' ? 'Copiar termo' : 'Copy term'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
       </div>
     </div>
   `,

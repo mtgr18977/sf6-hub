@@ -250,8 +250,9 @@ function setupFrameData() {
     for(const [char, moves] of Object.entries(SF6_FRAME_DATA)){
       const charName = char.charAt(0).toUpperCase() + char.slice(1);
       
-      if(charName.toLowerCase().includes(q)) {
-        for(const m of moves){
+      for(const m of moves){
+        const moveText = `${m.name} ${m.input} ${m.startup} ${m.active} ${m.onBlock} ${m.onHit} ${m.recovery} ${m.notes || ''}`.toLowerCase();
+        if(charName.toLowerCase().includes(q) || moveText.includes(q)) {
           if(matchCount >= MAX_ROWS) break;
           const tr = document.createElement('tr');
           tr.style.cursor = 'pointer';
@@ -617,7 +618,8 @@ function setupGlossary() {
   // Copy buttons
   document.querySelectorAll('button.copy').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-      const text = btn.getAttribute('data-copy') || t('copy_success');
+      const term = btn.closest('.term');
+      const text = btn.getAttribute('data-copy') || term?.querySelector('h3')?.textContent?.trim() || '';
       try{
         await navigator.clipboard.writeText(text);
         const original = btn.textContent;
