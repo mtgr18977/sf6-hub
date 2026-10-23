@@ -470,8 +470,10 @@
     /* P1/P2 visual system: warm arcade accent, calm surfaces, explicit theme states */
     body {
       background: radial-gradient(circle at 8% 0%, var(--accent-soft), transparent 28%), var(--bg);
+      color: var(--text);
       transition: background .2s ease, color .2s ease;
     }
+    html[data-theme="light"] body { background: radial-gradient(circle at 8% 0%, rgba(168, 55, 34, .08), transparent 30%), var(--bg); }
     header, nav.sidebar, main, .modal-content, .feature-card, .combo-card {
       border-color: var(--line);
     }
@@ -495,14 +497,22 @@
     }
     #theme-toggle:hover { border-color: var(--accent); background: var(--accent-soft); }
     #theme-toggle .theme-icon { color: var(--accent); font-size: 15px; }
-    #home-title { background: linear-gradient(135deg, var(--accent), var(--accent-strong)) !important; }
+    #home-title { color: var(--accent-strong) !important; background: none !important; -webkit-text-fill-color: currentColor !important; }
     #home .feature-card > div:last-child { color: var(--accent) !important; }
     .combo-card .combo-notation { color: var(--accent-strong); background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 22%, transparent); }
     .modal-table .hl-plus { color: var(--success); }
     .modal-table .hl-minus { color: var(--danger); }
     html[data-theme="light"] header { box-shadow: 0 10px 30px rgba(22,35,58,.08); }
+    html[data-theme="light"] main { background: var(--card); }
+    html[data-theme="light"] .feature-card,
+    html[data-theme="light"] .combo-card { background: var(--card-raised); box-shadow: 0 8px 20px rgba(22,35,58,.06); }
+    html[data-theme="light"] .toc a { color: var(--text); }
+    html[data-theme="light"] .toc a:hover,
+    html[data-theme="light"] .toc a.active { color: var(--accent-strong); }
+    html[data-theme="light"] .combo-card .combo-notes,
+    html[data-theme="light"] .combo-card .combo-info-item { color: var(--muted); }
     html[data-theme="light"] .modal-overlay { background: rgba(22,35,58,.42); }
-    html[data-theme="light"] select option { background: var(--card) !important; }
+    html[data-theme="light"] select option { background: var(--card) !important; color: var(--text) !important; }
     @media (max-width: 880px) {
       header {
         padding: 14px 16px;
@@ -998,22 +1008,31 @@
         label.textContent = isLight ? 'Light' : 'Dark';
         icon.textContent = isLight ? '☀' : '☾';
       };
-      applyTheme(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-      button.addEventListener('click', () => applyTheme(root.dataset.theme === 'light' ? 'dark' : 'light'));
+      let savedTheme = '';
+      try { savedTheme = localStorage.getItem('sf6-hub-theme') || ''; } catch (error) {}
+      applyTheme(savedTheme || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+      button.addEventListener('click', () => {
+        const nextTheme = root.dataset.theme === 'light' ? 'dark' : 'light';
+        applyTheme(nextTheme);
+        try { localStorage.setItem('sf6-hub-theme', nextTheme); } catch (error) {}
+      });
 
       const search = document.getElementById('global-search');
       const routes = [
         ['home', 'início home começo'], ['frame-calculator', 'calculadora cálculo frames vantagem punish'],
-        ['combos', 'combos combo personagem'], ['matchup-helper', 'matchup confronto adversário'],
+        ['combos', 'combos combo personagem ken ryu chun-li guile luke'], ['matchup-helper', 'matchup confronto adversário'],
         ['frame-data', 'frame data golpe startup on block'], ['glossary', 'glossário termos guia']
       ];
+      const comboCharacters = ['ken', 'ryu', 'chun-li', 'guile', 'luke'];
       search?.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return;
         const query = search.value.trim().toLowerCase();
         if (!query) return;
-        const match = routes.find(([, terms]) => terms.includes(query) || terms.split(' ').some(term => term.startsWith(query)));
+        const character = comboCharacters.find(name => name === query || name.startsWith(query));
+        const match = character ? ['combos'] : routes.find(([, terms]) => terms.includes(query) || terms.split(' ').some(term => term.startsWith(query)));
         if (!match) { search.setAttribute('aria-invalid', 'true'); return; }
         search.removeAttribute('aria-invalid');
+        if (character) window.__pendingComboCharacter = character;
         document.querySelector(`[data-section="${match[0]}"]`)?.click();
         search.blur();
       });

@@ -186,6 +186,13 @@ function setupCombos() {
   if(comboCharSelect) {
     comboCharSelect.addEventListener('change', renderCombos);
     comboDiffFilter.addEventListener('change', renderCombos);
+
+    const pendingCharacter = window.__pendingComboCharacter;
+    if(pendingCharacter && SF6_COMBOS[pendingCharacter]) {
+      comboCharSelect.value = pendingCharacter;
+      window.__pendingComboCharacter = '';
+      renderCombos();
+    }
   }
 
   // Initialize combo modal
