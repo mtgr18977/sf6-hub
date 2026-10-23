@@ -314,6 +314,57 @@ const SF6_COMBOS_DATA = {
   }
 };
 
+/*
+ * Roster completo do SF6 (lançamento + Year 1, 2 e 3).
+ * Os cinco personagens acima mantêm rotas detalhadas. Para os demais, estes
+ * BnBs seguros funcionam como ponto de partida e deixam todos os personagens
+ * disponíveis no Hub enquanto novas rotas são revisadas pela comunidade.
+ */
+const SF6_ROSTER = [
+  ['lily', 'Lily', 'cr.MP xx Condor Wind', '2MP xx 236P'],
+  ['jamie', 'Jamie', 'cr.MK xx Freeflow Strikes', '2MK xx 236P'],
+  ['zangief', 'Zangief', 'cr.MP > Double Lariat', '2MP >  double lariat'],
+  ['dhalsim', 'Dhalsim', 'st.MP xx Yoga Flame', '5MP xx 623P'],
+  ['juri', 'Juri', 'cr.MK xx Fuha Stock', '2MK xx 214K'],
+  ['kimberly', 'Kimberly', 'cr.MK xx Sprint', '2MK xx 236K'],
+  ['marisa', 'Marisa', 'st.MP > st.HP xx Gladius', '5MP > 5HP xx 236P'],
+  ['manon', 'Manon', 'cr.MK xx Rond-point', '2MK xx 236K'],
+  ['jp', 'JP', 'cr.MK xx Torbalan', '2MK xx 236P'],
+  ['cammy', 'Cammy', 'cr.MK xx Spiral Arrow', '2MK xx 236K'],
+  ['rashid', 'Rashid', 'cr.MK xx Arabian Cyclone', '2MK xx 236P'],
+  ['aki', 'A.K.I.', 'cr.MK xx Nightshade Pulse', '2MK xx 236P'],
+  ['ed', 'Ed', 'cr.MK xx Psycho Flicker', '2MK xx 236P'],
+  ['akuma', 'Akuma', 'cr.MK xx Gou Hadoken', '2MK xx 236P'],
+  ['m-bison', 'M. Bison', 'cr.MK xx Double Knee Press', '2MK xx 236K'],
+  ['terry', 'Terry', 'cr.MK xx Power Wave', '2MK xx 236P'],
+  ['mai', 'Mai', 'cr.MK xx Kachousen', '2MK xx 236P'],
+  ['elena', 'Elena', 'cr.MK xx Scratch Wheel', '2MK xx 623K'],
+  ['sagat', 'Sagat', 'cr.MK xx Tiger Shot', '2MK xx 236P'],
+  ['c-viper', 'C. Viper', 'cr.MK xx Thunder Knuckle', '2MK xx 236P'],
+  ['alex', 'Alex', 'cr.MK xx Flash Chop', '2MK xx 236P'],
+  ['ingrid', 'Ingrid', 'cr.MK xx Sunburst', '2MK xx 236P'],
+  ['e-honda', 'E. Honda', 'cr.MK xx Hundred Hand Slap', '2MK xx 214P'],
+  ['blanka', 'Blanka', 'cr.MK xx Blanka Ball', '2MK xx 4[P]6P'],
+  ['deejay', 'Dee Jay', 'cr.MK xx Air Slasher', '2MK xx [4]6P'],
+  ['ryu', 'Ryu', 'cr.MK xx Hadoken', '2MK xx 236P'],
+  ['ken', 'Ken', 'cr.MK xx Hadoken', '2MK xx 236P'],
+  ['chun-li', 'Chun-Li', 'cr.MK xx Kikoken', '2MK xx [4]6P'],
+  ['guile', 'Guile', 'cr.MK xx Sonic Boom', '2MK xx [4]6P'],
+  ['luke', 'Luke', 'cr.MK xx Sand Blast', '2MK xx 236P']
+];
+
+for (const [key, character, combo, notation] of SF6_ROSTER) {
+  if (SF6_COMBOS_DATA[key]) continue;
+  SF6_COMBOS_DATA[key] = {
+    character,
+    combos: [
+      { difficulty: { 'pt-BR': 'Básico', en: 'Basic' }, starter: 'cr.MK', combo, notation, damage: '~900', notes: { 'pt-BR': 'Confirm básico seguro para começar. Confira a rota no modo treino.', en: 'Safe basic confirm to get started. Verify the route in Training mode.' }, situation: { 'pt-BR': 'Neutro', en: 'Neutral' } },
+      { difficulty: { 'pt-BR': 'Intermediário', en: 'Intermediate' }, starter: 'Drive Rush st.HP', combo: `DR st.HP > ${combo.split(' xx ')[0]} xx SA1`, notation: `DR 5HP > ${notation.split(' xx ')[0]} xx 236236P`, damage: '~2500', notes: { 'pt-BR': 'Rota de Drive Rush; confirme o golpe especial no treino.', en: 'Drive Rush route; verify the special cancel in Training mode.' }, situation: { 'pt-BR': 'Drive Rush', en: 'Drive Rush' } },
+      { difficulty: { 'pt-BR': 'Avançado', en: 'Advanced' }, starter: 'Punish Counter st.HP', combo: `st.HP (PC) > cr.HP xx ${combo.split(' xx ')[1] || combo}`, notation: `5HP (PC) > 2HP xx ${notation.split(' xx ')[1] || notation}`, damage: '~3000', notes: { 'pt-BR': 'Conversão de punish; dano varia conforme o especial e a distância.', en: 'Punish conversion; damage varies by special and spacing.' }, situation: { 'pt-BR': 'Punish Counter', en: 'Punish Counter' } }
+    ]
+  };
+}
+
 // Derived combos object that respects the current language
 let SF6_COMBOS = {};
 
