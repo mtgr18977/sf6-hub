@@ -391,7 +391,13 @@ const TRANSLATIONS = {
   }
 };
 
-let currentLang = localStorage.getItem('sf6-hub-lang') || 'pt-BR';
+let currentLang = 'pt-BR';
+try {
+  const savedLang = localStorage.getItem('sf6-hub-lang');
+  if (savedLang === 'pt-BR' || savedLang === 'en') currentLang = savedLang;
+} catch (error) {
+  // Continue with the default language when storage is unavailable.
+}
 
 function t(key) {
   return TRANSLATIONS[currentLang][key] || key;
