@@ -246,6 +246,49 @@ function updateMatchupsLanguage() {
 
 updateMatchupsLanguage();
 
+// Builds useful, character-specific guidance when a researched pair is not in the database yet.
+// This avoids showing the same generic copy for every unresearched matchup.
+const SF6_CHARACTER_PROFILES = {
+  ryu: { pt: { style: 'fireball e controle de espaço', tools: ['Hadoken', 'cr.MK', 'Shoryuken'], threat: 'Drive Rush após Hadoken' }, en: { style: 'fireballs and space control', tools: ['Hadoken', 'cr.MK', 'Shoryuken'], threat: 'Drive Rush after Hadoken' } },
+  ken: { pt: { style: 'pressão ofensiva e Drive Rush', tools: ['Jinrai Kick', 'Dragonlash', 'Shoryuken'], threat: 'Jinrai Kick e corrida para throw' }, en: { style: 'offense and Drive Rush pressure', tools: ['Jinrai Kick', 'Dragonlash', 'Shoryuken'], threat: 'Jinrai Kick and run throw' } },
+  chunli: { pt: { style: 'controle de espaço e stance', tools: ['Kikoken', 'cr.MK', 'Hazanshu'], threat: 'stance mix-up após Drive Rush' }, en: { style: 'space control and stance pressure', tools: ['Kikoken', 'cr.MK', 'Hazanshu'], threat: 'stance mix-up after Drive Rush' } },
+  guile: { pt: { style: 'zoneamento com carga', tools: ['Sonic Boom', 'Flash Kick', 'st.MP'], threat: 'Sonic Boom + Flash Kick' }, en: { style: 'charge-based zoning', tools: ['Sonic Boom', 'Flash Kick', 'st.MP'], threat: 'Sonic Boom + Flash Kick' } },
+  zangief: { pt: { style: 'grabs e dano de perto', tools: ['Lariat', 'SPD', 'st.MP'], threat: 'SPD no alcance de agarrão' }, en: { style: 'close-range grabs and damage', tools: ['Lariat', 'SPD', 'st.MP'], threat: 'SPD at throw range' } },
+  cammy: { pt: { style: 'mobilidade e whiff punish', tools: ['Cannon Strike', 'Spiral Arrow', 'st.MK'], threat: 'Cannon Strike e Drive Rush' }, en: { style: 'mobility and whiff punishing', tools: ['Cannon Strike', 'Spiral Arrow', 'st.MK'], threat: 'Cannon Strike and Drive Rush' } },
+  juri: { pt: { style: 'mobilidade e pressão com estoques', tools: ['Fuhajin', 'Dive Kick', 'cr.MK'], threat: 'Drive Rush após armazenar Fuhajin' }, en: { style: 'mobility and stock-based pressure', tools: ['Fuhajin', 'Dive Kick', 'cr.MK'], threat: 'Drive Rush after storing Fuhajin' } },
+  blanka: { pt: { style: 'mobilidade imprevisível e distância', tools: ['Blanka Ball', 'Rainbow Ball', 'st.MK'], threat: 'Blanka Ball com mudança de trajetória' }, en: { style: 'unpredictable mobility and range', tools: ['Blanka Ball', 'Rainbow Ball', 'st.MK'], threat: 'Blanka Ball trajectory changes' } },
+  dhalsim: { pt: { style: 'zoneamento de longo alcance', tools: ['Yoga Fire', 'Yoga Float', 'anti-air'], threat: 'Yoga Teleport após bloquear' }, en: { style: 'long-range zoning', tools: ['Yoga Fire', 'Yoga Float', 'anti-air'], threat: 'Yoga Teleport after blocking' } }
+};
+
+function buildUnresearchedMatchup(char1, char2) {
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : (localStorage.getItem('sf6-hub-lang') || 'pt-BR');
+  const pt = lang !== 'en';
+  const p1 = SF6_CHARACTER_PROFILES[char1.toLowerCase()]?.[pt ? 'pt' : 'en'];
+  const p2 = SF6_CHARACTER_PROFILES[char2.toLowerCase()]?.[pt ? 'pt' : 'en'];
+  const name1 = char1.charAt(0).toUpperCase() + char1.slice(1);
+  const name2 = char2.charAt(0).toUpperCase() + char2.slice(1);
+  const a = p1 || { style: pt ? 'suas condições de vitória' : 'your win conditions', tools: pt ? ['melhores pokes', 'anti-air', 'Drive Rush'] : ['best pokes', 'anti-air', 'Drive Rush'], threat: pt ? 'mix-up após Drive Rush' : 'mix-up after Drive Rush' };
+  const b = p2 || { style: pt ? 'pressão e controle de espaço' : 'pressure and space control', tools: pt ? ['normals de alcance', 'especiais', 'Drive Rush'] : ['long normals', 'specials', 'Drive Rush'], threat: pt ? 'pressão ofensiva' : 'offensive pressure' };
+  return {
+    rating: '5-5',
+    difficulty: pt ? 'Em análise' : 'Under review',
+    keyPoints: pt ? [
+      `${name1} disputa o neutro usando ${a.style}`,
+      `${name2} busca impor ${b.style}`,
+      `Respeite ${b.threat} e procure o punish depois de bloquear`,
+      `Ajuste o plano conforme distância, Drive Gauge e hábito do oponente`
+    ] : [
+      `${name1} contests neutral with ${a.style}`,
+      `${name2} wants to impose ${b.style}`,
+      `Respect ${b.threat} and look for the punish after blocking`,
+      `Adapt to spacing, Drive Gauge, and the opponent's habits`
+    ],
+    tips: pt ? [`Use ${a.tools[0]} para iniciar o plano`, `Confirme ${a.tools[1]} no neutro`, `Guarde ${a.tools[2]} para responder à entrada`, `Treine o punish de ${b.threat}`] : [`Use ${a.tools[0]} to start your game plan`, `Confirm ${a.tools[1]} in neutral`, `Save ${a.tools[2]} to answer approaches`, `Practice punishing ${b.threat}`],
+    dangerousMoves: [b.threat, ...b.tools],
+    yourTools: a.tools
+  };
+}
+
 // Helper function to get matchup data
 function getMatchupData(char1, char2) {
   const key1 = `${char1.toLowerCase()}-vs-${char2.toLowerCase()}`;
@@ -272,8 +315,8 @@ function getMatchupData(char1, char2) {
     return { ...reversed, perspective: char1 };
   }
   
-  // Return default if no specific data
-  return { ...SF6_MATCHUPS.default, perspective: char1 };
+  // Keep every unresearched pair useful and specific instead of repeating one generic message.
+  return { ...buildUnresearchedMatchup(char1, char2), perspective: char1 };
 }
 
 // Get all available characters from combos
