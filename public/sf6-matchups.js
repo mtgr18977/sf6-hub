@@ -189,16 +189,16 @@ const SF6_MATCHUPS_DATA = {
     difficulty: { "pt-BR": "Desconhecido", "en": "Unknown" },
     keyPoints: {
       "pt-BR": [
-        "Matchup ainda sendo estudado pela comunidade",
-        "Conhecimento específico limitado",
-        "Foque nos fundamentos do seu personagem",
-        "Estude os golpes e frame data do oponente"
+        "Priorize o controle de espaço e não ceda o centro da tela",
+        "Use Drive Parry contra especiais e confirme o punish quando houver espaço",
+        "Varie entre pokes, Drive Rush e agarrão para não ficar previsível",
+        "Observe os hábitos do oponente antes de escolher uma resposta fixa"
       ],
       "en": [
-        "Matchup still being studied by the community",
-        "Limited specific knowledge",
-        "Focus on your character's fundamentals",
-        "Study opponent's moves and frame data"
+        "Prioritize space control and do not give up the center of the screen",
+        "Use Drive Parry against specials and confirm the punish when there is room",
+        "Vary pokes, Drive Rush, and throws so you do not become predictable",
+        "Watch the opponent's habits before committing to a fixed answer"
       ]
     },
     tips: {
