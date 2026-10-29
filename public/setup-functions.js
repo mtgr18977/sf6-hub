@@ -125,25 +125,33 @@ function setupCombos() {
   }
 
   function renderCombos() {
-    const selectedChar = comboCharSelect.value;
-    const selectedDiff = comboDiffFilter.value;
+    const selectedChar = comboCharSelect?.value;
+    const selectedDiff = comboDiffFilter?.value || '';
 
-    if(!selectedChar || !SF6_COMBOS[selectedChar]) {
+    if (comboCopyAll) comboCopyAll.disabled = true;
+
+    if (!selectedChar || !SF6_COMBOS[selectedChar]) {
       comboList.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted);font-style:italic">${t('combos_empty')}</div>`;
       currentCombos = [];
       return;
     }
 
     const charData = SF6_COMBOS[selectedChar];
-    let combos = charData.combos;
-
-    if(selectedDiff) {
-      combos = combos.filter(c => c.difficulty === selectedDiff);
+    if (!Array.isArray(charData.combos) || charData.combos.length === 0) {
+      currentCombos = [];
+      const notice = document.createElement('div');
+      notice.className = 'data-coverage-message';
+      notice.textContent = t('combos_unpublished').replace('{character}', charData.character);
+      comboList.replaceChildren(notice);
+      return;
     }
 
+    let combos = charData.combos;
+    if (selectedDiff) combos = combos.filter(combo => combo.difficulty === selectedDiff);
     currentCombos = combos;
+    if (comboCopyAll) comboCopyAll.disabled = combos.length === 0;
 
-    if(combos.length === 0) {
+    if (combos.length === 0) {
       comboList.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted);font-style:italic">${t('combos_no_results')}</div>`;
       return;
     }
@@ -235,7 +243,9 @@ function setupFrameData() {
   const fdMsg = document.getElementById('fd-message');
   const fdTableContainer = document.getElementById('fd-table-container');
 
-  function normalize(s){return s.toLowerCase();}
+  function normalize(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
 
   function renderFrameData(query){
     if(typeof SF6_FRAME_DATA === 'undefined') return;
@@ -258,8 +268,8 @@ function setupFrameData() {
       const charName = char.charAt(0).toUpperCase() + char.slice(1);
       
       for(const m of moves){
-        const moveText = `${m.name} ${m.input} ${m.startup} ${m.active} ${m.onBlock} ${m.onHit} ${m.recovery} ${m.notes || ''}`.toLowerCase();
-        if(charName.toLowerCase().includes(q) || moveText.includes(q)) {
+        const moveText = normalize(`${m.name} ${m.input} ${m.startup} ${m.active} ${m.onBlock} ${m.onHit} ${m.recovery} ${m.notes || ''}`);
+        if(normalize(charName).includes(q) || moveText.includes(q)) {
           if(matchCount >= MAX_ROWS) break;
           const tr = document.createElement('tr');
           tr.style.cursor = 'pointer';
@@ -596,47 +606,73 @@ function setupGlossary() {
   const search = document.getElementById('search');
   const clear = document.getElementById('clear');
   const onlyCore = document.getElementById('onlyCore');
-  const terms = Array.from(document.querySelectorAll('.term'));
+  const categoryFilter = document.getElementById('glossary-category-filter');
+  const count = document.getElementById('glossary-count');
+  const noResults = document.getElementById('glossary-no-results');
+  const terms = Array.from(document.querySelectorAll('.glossary-term'));
+  const categories = Array.from(document.querySelectorAll('.glossary-category'));
+  const isPortuguese = currentLang === 'pt-BR';
+  const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-  function normalize(s){return s.toLowerCase();}
+  if (search && window.__pendingGlossaryQuery) {
+    search.value = window.__pendingGlossaryQuery;
+    window.__pendingGlossaryQuery = '';
+  }
 
-  function applyGlossaryFilter(){
-    const q = normalize(search.value.trim());
-    const core = onlyCore.checked;
-    terms.forEach(t => {
-      const text = normalize(t.getAttribute('data-term') + ' ' + t.innerText);
-      const isCore = t.getAttribute('data-core') === 'true';
-      const matchesQ = q === '' || text.indexOf(q) !== -1;
-      const matchesCore = !core || isCore;
-      t.style.display = (matchesQ && matchesCore) ? 'flex' : 'none';
+  function applyGlossaryFilter() {
+    const query = normalize(search?.value.trim());
+    const selectedCategory = categoryFilter?.value || '';
+    const essentialsOnly = Boolean(onlyCore?.checked);
+    let visibleCount = 0;
+
+    terms.forEach(term => {
+      const matchesQuery = !query || normalize(term.dataset.search || term.textContent).includes(query);
+      const matchesCategory = !selectedCategory || term.dataset.category === selectedCategory;
+      const matchesCore = !essentialsOnly || term.dataset.core === 'true';
+      const visible = matchesQuery && matchesCategory && matchesCore;
+      term.hidden = !visible;
+      if (visible) visibleCount += 1;
     });
+
+    categories.forEach(category => {
+      category.hidden = !category.querySelector('.glossary-term:not([hidden])');
+    });
+
+    if (count) {
+      count.textContent = isPortuguese
+        ? `${visibleCount} ${visibleCount === 1 ? 'termo encontrado' : 'termos encontrados'}`
+        : `${visibleCount} ${visibleCount === 1 ? 'term found' : 'terms found'}`;
+    }
+    if (noResults) noResults.hidden = visibleCount !== 0;
+    if (clear) clear.disabled = !search?.value && !selectedCategory && !essentialsOnly;
   }
 
-  if(search) {
-    search.addEventListener('input', applyGlossaryFilter);
-  }
-  if(clear) {
-    clear.addEventListener('click', ()=>{search.value=''; applyGlossaryFilter(); search.focus();});
-  }
-  if(onlyCore) {
-    onlyCore.addEventListener('change', applyGlossaryFilter);
-  }
+  search?.addEventListener('input', applyGlossaryFilter);
+  categoryFilter?.addEventListener('change', applyGlossaryFilter);
+  onlyCore?.addEventListener('change', applyGlossaryFilter);
+  clear?.addEventListener('click', () => {
+    if (search) search.value = '';
+    if (categoryFilter) categoryFilter.value = '';
+    if (onlyCore) onlyCore.checked = false;
+    applyGlossaryFilter();
+    search?.focus();
+  });
 
-  // Copy buttons
-  document.querySelectorAll('button.copy').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const term = btn.closest('.term');
-      const text = btn.getAttribute('data-copy') || term?.querySelector('h3')?.textContent?.trim() || '';
-      try{
+  document.querySelectorAll('.glossary-term button.copy').forEach(button => {
+    button.addEventListener('click', async () => {
+      const text = button.dataset.copy || button.closest('.glossary-term')?.querySelector('h4')?.textContent?.trim() || '';
+      try {
         await navigator.clipboard.writeText(text);
-        const original = btn.textContent;
-        btn.textContent = '✔';
-        setTimeout(()=>btn.textContent=original,800);
-      }catch(err){
+        const original = button.textContent;
+        button.textContent = t('copy_success');
+        setTimeout(() => button.textContent = original, 1200);
+      } catch (error) {
         alert(t('copy_fail'));
       }
     });
   });
+
+  applyGlossaryFilter();
 }
 
 // Modal system for Combo details
@@ -795,46 +831,57 @@ function setupMatchupHelper() {
   const resultDiv = document.getElementById('matchup-result');
   const emptyDiv = document.getElementById('matchup-empty');
 
-  // Populate character dropdowns
-  if(typeof getAvailableCharacters === 'function') {
-    const characters = getAvailableCharacters();
-    characters.forEach(char => {
-      const option1 = document.createElement('option');
-      option1.value = char.toLowerCase();
-      option1.textContent = char;
-      char1Select.appendChild(option1);
+  // Use stable character IDs for data lookup; display names can contain punctuation or spaces.
+  const characters = typeof SF6_COMBOS_DATA !== 'undefined'
+    ? Object.entries(SF6_COMBOS_DATA).map(([id, data]) => ({ id, name: data.character })).sort((a, b) => a.name.localeCompare(b.name))
+    : (typeof getAvailableCharacters === 'function'
+      ? getAvailableCharacters().map(name => ({ id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), name }))
+      : []);
 
-      const option2 = document.createElement('option');
-      option2.value = char.toLowerCase();
-      option2.textContent = char;
-      char2Select.appendChild(option2);
-    });
-  }
+  characters.forEach(({ id, name }) => {
+    const option1 = document.createElement('option');
+    option1.value = id;
+    option1.textContent = name;
+    char1Select.appendChild(option1);
+
+    const option2 = document.createElement('option');
+    option2.value = id;
+    option2.textContent = name;
+    char2Select.appendChild(option2);
+  });
 
   function updateMatchup() {
     const char1 = char1Select.value;
     const char2 = char2Select.value;
 
-    if(!char1 || !char2) {
+    if (!char1 || !char2) {
+      emptyDiv.textContent = t('matchup_empty');
       resultDiv.style.display = 'none';
       emptyDiv.style.display = 'block';
       return;
     }
 
-    if(char1 === char2) {
+    if (char1 === char2) {
       emptyDiv.textContent = t('matchup_same_char');
       emptyDiv.style.display = 'block';
       resultDiv.style.display = 'none';
       return;
     }
 
-    // Get matchup data
+    const character1 = char1Select.options[char1Select.selectedIndex].textContent;
+    const character2 = char2Select.options[char2Select.selectedIndex].textContent;
     const matchup = getMatchupData(char1, char2);
-    
-    // Update UI
-    document.getElementById('matchup-title').textContent = 
-      `${char1.charAt(0).toUpperCase() + char1.slice(1)} vs ${char2.charAt(0).toUpperCase() + char2.slice(1)}`;
-    
+
+    if (!matchup) {
+      emptyDiv.textContent = t('matchup_no_data')
+        .replace('{yourCharacter}', character1)
+        .replace('{opponent}', character2);
+      emptyDiv.style.display = 'block';
+      resultDiv.style.display = 'none';
+      return;
+    }
+
+    document.getElementById('matchup-title').textContent = `${character1} vs ${character2}`;
     document.getElementById('matchup-rating').textContent = matchup.rating;
     
     const diffBadge = document.getElementById('matchup-difficulty-badge');

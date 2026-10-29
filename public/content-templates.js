@@ -95,11 +95,11 @@ const ContentTemplates = {
       </select>
       <select id="combo-difficulty-filter" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:inherit;font-size:14px">
         <option value="">${t('combos_all_diff')}</option>
-        <option value="Básico">${t('combos_basic')}</option>
-        <option value="Intermediário">${t('combos_intermediate')}</option>
-        <option value="Avançado">${t('combos_advanced')}</option>
+        <option value="${t('combos_basic')}">${t('combos_basic')}</option>
+        <option value="${t('combos_intermediate')}">${t('combos_intermediate')}</option>
+        <option value="${t('combos_advanced')}">${t('combos_advanced')}</option>
       </select>
-      <button id="combo-copy-all" class="copy" style="padding:10px 16px">${t('combos_copy_all')}</button>
+      <button id="combo-copy-all" class="copy" type="button" disabled style="padding:10px 16px">${t('combos_copy_all')}</button>
     </div>
 
     <div id="combo-list" style="display:grid;gap:12px">
@@ -121,6 +121,7 @@ const ContentTemplates = {
   frameData: () => `
     <h2>${t('fd_title')}</h2>
     <p style="color:var(--muted);margin-top:0">${t('fd_subtitle')}</p>
+    <p class="coverage-note">${t('fd_coverage').replace('{count}', Object.keys(SF6_FRAME_DATA).length)}</p>
 
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
       <input id="fd-filter" placeholder="${t('fd_search_placeholder')}" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit" />
@@ -159,50 +160,83 @@ const ContentTemplates = {
     </div>
   `,
 
-  glossary: () => `
-    <h2>${t('glossary_title')}</h2>
-    <p style="color:var(--muted);margin-top:0">${t('glossary_subtitle')}</p>
+  glossary: () => {
+    const isPortuguese = currentLang === 'pt-BR';
+    const terms = SF6_GLOSSARY_TERMS;
+    const categories = [
+      { id: 'fundamentals', label: isPortuguese ? 'Fundamentos' : 'Fundamentals' },
+      { id: 'frames', label: isPortuguese ? 'Frames e combos' : 'Frames and combos' },
+      { id: 'offense', label: isPortuguese ? 'Pressão e ofensiva' : 'Pressure and offense' },
+      { id: 'defense', label: isPortuguese ? 'Defesa' : 'Defense' },
+      { id: 'drive', label: isPortuguese ? 'Sistema Drive' : 'Drive System' },
+      { id: 'notation', label: isPortuguese ? 'Notação' : 'Notation' }
+    ];
+    const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[character]);
+    const categorySections = categories.map(category => {
+      const categoryTerms = terms.filter(term => term.category === category.id);
+      if (!categoryTerms.length) return '';
+      const cards = categoryTerms.map(term => {
+        const definition = isPortuguese ? term.pt.definition : term.en.definition;
+        const example = isPortuguese ? term.pt.example : term.en.example;
+        const searchText = [term.term, ...term.aliases, term.pt.definition, term.pt.example, term.en.definition, term.en.example].join(' ');
+        const coreBadge = term.core ? `<span class="glossary-core-badge">${t('glossary_core_badge')}</span>` : '';
+        const copyLabel = `${t('glossary_copy')} ${term.term}`;
+        return `
+          <article class="glossary-term" data-category="${category.id}" data-core="${term.core}" data-search="${escapeHTML(searchText)}">
+            <div class="glossary-term-content">
+              <h4>${escapeHTML(term.term)}</h4>
+              <p>${escapeHTML(definition)}</p>
+              <p class="glossary-example"><strong>${t('glossary_example_label')}:</strong> ${escapeHTML(example)}</p>
+            </div>
+            <div class="glossary-term-actions">
+              ${coreBadge}
+              <button class="copy glossary-copy" type="button" data-copy="${escapeHTML(term.term)}" aria-label="${escapeHTML(copyLabel)}">${t('glossary_copy')}</button>
+            </div>
+          </article>`;
+      }).join('');
+      return `
+        <section class="glossary-category" data-glossary-category="${category.id}">
+          <h3>${escapeHTML(category.label)}</h3>
+          <div class="glossary-grid">${cards}</div>
+        </section>`;
+    }).join('');
 
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <input id="search" placeholder="${t('glossary_search_placeholder')}" aria-label="Buscar termos" style="flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:inherit;font-size:14px"/>
-      <button id="clear" class="copy" title="${t('glossary_clear')}">✕</button>
-    </div>
+    return `
+      <h2>${t('glossary_title')}</h2>
+      <p style="color:var(--muted);margin-top:0">${t('glossary_subtitle').replace('{count}', terms.length)}</p>
 
-    <div class="shortlist-toggle" style="margin-bottom:20px"><input id="onlyCore" type="checkbox"/> <label for="onlyCore">${t('glossary_only_core')}</label></div>
-
-    <div id="glossary-content">
-      <h3 style="color:var(--accent);font-size:18px;margin:20px 0 12px">${t('glossary_cat_fundamentals')}</h3>
-
-      <div class="term" data-term="footsies" data-core="true">
-        <div class="left">
-          <h3>Footsies</h3>
-          <p>${currentLang === 'pt-BR' ? 'Jogo neutro: controle de espaço com normais para ganhar posição e criar oportunidades.' : 'Neutral game: space control with normals to gain position and create opportunities.'}</p>
-          <div class="example">${currentLang === 'pt-BR' ? 'Ex.: usar cr.MK para manter distância segura e pescar um whiff do adversário.' : 'Ex.: using cr.MK to maintain safe distance and whiff punish the opponent.'}</div>
+      <div class="glossary-toolbar">
+        <div class="glossary-field">
+          <label for="search">${t('glossary_search_label')}</label>
+          <div class="glossary-search-row">
+            <input id="search" type="search" placeholder="${t('glossary_search_placeholder')}" aria-label="${t('glossary_search_placeholder')}" autocomplete="off" />
+            <button id="clear" type="button">${t('glossary_clear')}</button>
+          </div>
         </div>
-        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy" data-copy="Footsies — ${currentLang === 'pt-BR' ? 'Jogo neutro' : 'Neutral game'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
+        <div class="glossary-field">
+          <label for="glossary-category-filter">${t('glossary_category_label')}</label>
+          <select id="glossary-category-filter">
+            <option value="">${t('glossary_all_categories')}</option>
+            ${categories.map(category => `<option value="${category.id}">${escapeHTML(category.label)}</option>`).join('')}
+          </select>
+        </div>
+        <label class="glossary-core-toggle" for="onlyCore">
+          <input id="onlyCore" type="checkbox" />
+          <span>${t('glossary_only_core')}</span>
+        </label>
       </div>
 
-      <div class="term" data-term="neutral" data-core="true">
-        <div class="left"><h3>Neutral</h3><p>${currentLang === 'pt-BR' ? 'Situação onde nenhum jogador tem vantagem — ambos buscam criar oportunidades.' : 'Situation where neither player has advantage — both seek to create opportunities.'}</p></div>
-        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy" type="button" aria-label="${currentLang === 'pt-BR' ? 'Copiar termo' : 'Copy term'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
+      <div class="glossary-meta">
+        <p id="glossary-count" class="glossary-status" role="status" aria-live="polite"></p>
+        <p class="glossary-status">${isPortuguese ? 'A busca considera definições em português e inglês.' : 'Search includes both English and Portuguese definitions.'}</p>
       </div>
-
-      <div class="term" data-term="okizeme oki" data-core="true">
-        <div class="left"><h3>Okizeme (Oki)</h3><p>${currentLang === 'pt-BR' ? 'Pressão aplicada quando o oponente está levantando após knockdown.' : 'Pressure applied when the opponent is waking up after a knockdown.'}</p></div>
-        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy" type="button" aria-label="${currentLang === 'pt-BR' ? 'Copiar termo' : 'Copy term'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
-      </div>
-
-      <div class="term" data-term="meaty" data-core="true">
-        <div class="left"><h3>Meaty</h3><p>${currentLang === 'pt-BR' ? 'Golpe que acerta o oponente nos primeiros frames ao levantar, dando vantagem extra.' : 'Attack that hits the opponent on their very first wake-up frames, granting extra advantage.'}</p></div>
-        <div class="controls"><button class="copy" type="button" aria-label="${currentLang === 'pt-BR' ? 'Copiar termo' : 'Copy term'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
-      </div>
-
-      <div class="term" data-term="shimmy" data-core="true">
-        <div class="left"><h3>Shimmy</h3><p>${currentLang === 'pt-BR' ? 'Caminhar para trás após pressão para baitar throw tech e punir.' : 'Walking backward after pressure to bait a throw tech and punish.'}</p></div>
-        <div class="controls"><span class="badge">${currentLang === 'pt-BR' ? 'essencial' : 'essential'}</span><button class="copy" type="button" aria-label="${currentLang === 'pt-BR' ? 'Copiar termo' : 'Copy term'}">${currentLang === 'pt-BR' ? 'Copiar' : 'Copy'}</button></div>
-      </div>
-    </div>
-  `,
+      <p id="glossary-no-results" class="glossary-notice" role="status" hidden>${t('glossary_no_results')}</p>
+      <div id="glossary-content">${categorySections}</div>
+      <p class="glossary-source">${isPortuguese ? 'Definições resumidas para estudo; propriedades e dados específicos podem variar por personagem e patch. Referência comunitária: ' : 'Concise study definitions; move properties and exact data may vary by character and patch. Community reference: '}<a href="https://wiki.supercombo.gg/w/Street_Fighter_6" target="_blank" rel="noopener noreferrer">SuperCombo Wiki</a>.</p>
+    `;
+  },
 
   matchupHelper: () => `
     <h2>${t('matchup_title')}</h2>
