@@ -184,7 +184,7 @@ const ContentTemplates = {
         const coreBadge = term.core ? `<span class="glossary-core-badge">${t('glossary_core_badge')}</span>` : '';
         const copyLabel = `${t('glossary_copy')} ${term.term}`;
         return `
-          <article class="glossary-term" data-category="${category.id}" data-core="${term.core}" data-search="${escapeHTML(searchText)}">
+          <article class="glossary-term" data-category="${category.id}" data-core="${Boolean(term.core)}" data-search="${escapeHTML(searchText)}">
             <div class="glossary-term-content">
               <h4>${escapeHTML(term.term)}</h4>
               <p>${escapeHTML(definition)}</p>
