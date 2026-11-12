@@ -1,4 +1,20 @@
 // Matchup knowledge base for SF6
+const SF6_MATCHUP_STATS_META = {
+  sourceName: 'Dood matchup chart',
+  sourceUrl: 'https://dood.gg/en/street-fighter-6/matchup/',
+  latestPeriod: '2026-09',
+  checkedAt: '2026-11-12',
+  includesArjun: false,
+  embedded: false
+};
+
+const SF6_MATCHUP_NOTES_META = {
+  directional: true,
+  reverseFallback: false,
+  sourceStatus: 'legacy-unverified',
+  sourceUrl: null
+};
+
 const SF6_MATCHUPS_DATA = {
   // Format: "char1-vs-char2": { ... }
   "ryu-vs-ken": {
@@ -186,6 +202,13 @@ const SF6_MATCHUPS_DATA = {
   }
 };
 
+for (const [direction, data] of Object.entries(SF6_MATCHUPS_DATA)) {
+  data.direction = direction;
+  data.verificationStatus = 'legacy-unverified';
+  data.sourceUrl = null;
+  data.sourceCheckedAt = null;
+}
+
 let SF6_MATCHUPS = {};
 
 function updateMatchupsLanguage() {
@@ -194,7 +217,11 @@ function updateMatchupsLanguage() {
   
   for (const [key, data] of Object.entries(SF6_MATCHUPS_DATA)) {
     SF6_MATCHUPS[key] = {
-      rating: data.rating,
+      direction: data.direction,
+      verificationStatus: data.verificationStatus,
+      sourceUrl: data.sourceUrl,
+      sourceCheckedAt: data.sourceCheckedAt,
+      rating: null,
       difficulty: data.difficulty[lang] || data.difficulty['en'],
       keyPoints: data.keyPoints[lang] || data.keyPoints['en'],
       tips: data.tips[lang] || data.tips['en'],

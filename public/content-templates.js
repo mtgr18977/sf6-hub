@@ -102,6 +102,9 @@ const ContentTemplates = {
       <button id="combo-copy-all" class="copy" type="button" disabled style="padding:10px 16px">${t('combos_copy_all')}</button>
     </div>
 
+    <div class="coverage-note" id="combo-source-note" role="status">${t('combos_source_initial')}</div>
+    <p style="margin:0 0 16px"><a id="combo-source-link" href="https://sf6combo.kagewebsite.com/" target="_blank" rel="noopener noreferrer">${t('combos_source_link')}</a></p>
+
     <div id="combo-list" style="display:grid;gap:12px">
       <div style="padding:40px;text-align:center;color:var(--muted);font-style:italic">
         ${t('combos_empty')}
@@ -121,7 +124,9 @@ const ContentTemplates = {
   frameData: () => `
     <h2>${t('fd_title')}</h2>
     <p style="color:var(--muted);margin-top:0">${t('fd_subtitle')}</p>
-    <p class="coverage-note">${t('fd_coverage').replace('{count}', Object.keys(SF6_FRAME_DATA).length)}</p>
+    <p class="coverage-note">${t('fd_coverage').replace('{count}', SF6_FRAME_DATA_META.characterCount).replace('{moves}', SF6_FRAME_DATA_META.moveCount)}</p>
+    <p class="coverage-note" id="fd-source-note"></p>
+    <p style="margin-top:-8px;display:flex;flex-wrap:wrap;gap:12px"><a id="fd-source-link" href="${SF6_FRAME_DATA_META.sourceUrl}" target="_blank" rel="noopener noreferrer">${t('fd_source_link')}</a><a id="fd-official-link" href="${SF6_FRAME_DATA_META.officialUpdateUrl}" target="_blank" rel="noopener noreferrer">${t('fd_official_link')}</a></p>
 
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
       <input id="fd-filter" placeholder="${t('fd_search_placeholder')}" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit" />
@@ -132,7 +137,7 @@ const ContentTemplates = {
     </div>
 
     <div style="overflow:auto;margin-top:12px;display:none" id="fd-table-container">
-      <table id="fd-table" style="width:100%;border-collapse:collapse;min-width:900px">
+      <table id="fd-table" style="width:100%;border-collapse:collapse;min-width:1250px">
         <thead>
           <tr style="text-align:left;color:var(--muted);font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03)">
             <th style="padding:8px">${t('fd_th_char')}</th>
@@ -142,7 +147,9 @@ const ContentTemplates = {
             <th style="padding:8px">${t('fd_th_active')}</th>
             <th style="padding:8px">${t('fd_th_onblock')}</th>
             <th style="padding:8px">${t('fd_th_onhit')}</th>
+            <th style="padding:8px">${t('fd_th_counter_hit')}</th>
             <th style="padding:8px">${t('fd_th_recovery')}</th>
+            <th style="padding:8px">${t('fd_th_damage')}</th>
             <th style="padding:8px">${t('fd_th_notes')}</th>
           </tr>
         </thead>
@@ -260,15 +267,22 @@ const ContentTemplates = {
       </div>
     </div>
 
+    <aside class="coverage-note" id="matchup-stats-note" role="note">
+      <h4 style="margin:0 0 8px;font-size:14px;color:var(--accent)">${t('matchup_stats_title')}</h4>
+      <p id="matchup-stats-copy" style="margin:0 0 8px"></p>
+      <a id="matchup-stats-link" href="https://dood.gg/en/street-fighter-6/matchup/" target="_blank" rel="noopener noreferrer">${t('matchup_stats_link')}</a>
+    </aside>
+
     <div id="matchup-result" style="display:none">
       <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:24px;margin-top:20px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
           <h3 style="margin:0;font-size:20px;color:var(--text)" id="matchup-title">Matchup</h3>
-          <div style="display:flex;gap:12px;align-items:center">
-            <span id="matchup-rating" style="font-size:24px;font-weight:700;color:var(--accent)">5-5</span>
-            <span id="matchup-difficulty-badge" class="badge">Even</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+            <span id="matchup-rating" class="badge">${t('matchup_stats_external')}</span>
+            <span id="matchup-difficulty-badge" class="badge">${t('matchup_notes_unverified_badge')}</span>
           </div>
         </div>
+        <p id="matchup-note-provenance" class="coverage-note"></p>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px">
           <div>
