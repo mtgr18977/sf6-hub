@@ -107,11 +107,23 @@ function setupCalculators() {
   }
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
+}
+
 function setupCombos() {
   const comboCharSelect = document.getElementById('combo-character-select');
   const comboDiffFilter = document.getElementById('combo-difficulty-filter');
   const comboList = document.getElementById('combo-list');
   const comboCopyAll = document.getElementById('combo-copy-all');
+  const comboSourceNote = document.getElementById('combo-source-note');
+  const comboSourceLink = document.getElementById('combo-source-link');
   let currentCombos = [];
 
   // Populate character dropdown
@@ -124,19 +136,47 @@ function setupCombos() {
     });
   }
 
+  function updateSourceState(charData) {
+    if (!comboSourceNote || !comboSourceLink) return;
+
+    const sourceUrl = charData?.communitySourceUrl || SF6_COMBO_DATA_META.sourceUrl;
+    comboSourceLink.href = sourceUrl;
+    comboSourceLink.textContent = t('combos_source_link');
+
+    if (!charData) {
+      comboSourceNote.textContent = t('combos_source_initial');
+      return;
+    }
+
+    const count = Array.isArray(charData.combos) ? charData.combos.length : 0;
+    if (count > 0) {
+      comboSourceNote.textContent = t('combos_source_legacy')
+        .replace('{count}', count)
+        .replace('{character}', charData.character);
+    } else if (charData.communitySourceStatus === 'no-submissions') {
+      comboSourceNote.textContent = t('combos_source_empty_checked')
+        .replace('{character}', charData.character)
+        .replace('{checkedAt}', charData.communitySourceCheckedAt || SF6_COMBO_DATA_META.checkedAt);
+    } else {
+      comboSourceNote.textContent = t('combos_source_empty').replace('{character}', charData.character);
+    }
+  }
+
   function renderCombos() {
     const selectedChar = comboCharSelect?.value;
     const selectedDiff = comboDiffFilter?.value || '';
+    const selectedCharacterData = selectedChar ? SF6_COMBOS[selectedChar] : null;
 
+    updateSourceState(selectedCharacterData);
     if (comboCopyAll) comboCopyAll.disabled = true;
 
-    if (!selectedChar || !SF6_COMBOS[selectedChar]) {
-      comboList.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted);font-style:italic">${t('combos_empty')}</div>`;
+    if (!selectedChar || !selectedCharacterData) {
+      comboList.textContent = t('combos_empty');
       currentCombos = [];
       return;
     }
 
-    const charData = SF6_COMBOS[selectedChar];
+    const charData = selectedCharacterData;
     if (!Array.isArray(charData.combos) || charData.combos.length === 0) {
       currentCombos = [];
       const notice = document.createElement('div');
@@ -152,7 +192,7 @@ function setupCombos() {
     if (comboCopyAll) comboCopyAll.disabled = combos.length === 0;
 
     if (combos.length === 0) {
-      comboList.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted);font-style:italic">${t('combos_no_results')}</div>`;
+      comboList.textContent = t('combos_no_results');
       return;
     }
 
@@ -161,26 +201,27 @@ function setupCombos() {
       const card = document.createElement('div');
       card.className = 'combo-card';
       
-      const diffClass = combo.difficulty.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const diffClass = combo.difficulty.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]/g, '');
       
       card.innerHTML = `
         <div class="combo-header">
-          <div class="combo-title">${combo.combo}</div>
-          <span class="difficulty-badge ${diffClass}">${combo.difficulty}</span>
+          <div class="combo-title">${escapeHtml(combo.combo)}</div>
+          <span class="difficulty-badge ${diffClass}">${escapeHtml(combo.difficulty)}</span>
+          <span class="badge">${t('combo_legacy_badge')}</span>
         </div>
-        <div class="combo-notation">${combo.notation}</div>
+        <div class="combo-notation">${escapeHtml(combo.notation)}</div>
         <div class="combo-info">
           <div class="combo-info-item">
-            <strong>${t('combo_starter')}:</strong> ${combo.starter}
+            <strong>${t('combo_starter')}:</strong> ${escapeHtml(combo.starter)}
           </div>
           <div class="combo-info-item">
-            <strong>${t('combo_damage')}:</strong> ${combo.damage}
+            <strong>${t('combo_damage')}:</strong> ${escapeHtml(combo.damage)}
           </div>
           <div class="combo-info-item">
-            <strong>${t('combo_situation')}:</strong> ${combo.situation}
+            <strong>${t('combo_situation')}:</strong> ${escapeHtml(combo.situation)}
           </div>
         </div>
-        <div class="combo-notes">${combo.notes}</div>
+        <div class="combo-notes">${escapeHtml(combo.notes)}</div>
       `;
 
       card.addEventListener('click', () => {
@@ -242,6 +283,25 @@ function setupFrameData() {
   const fdBody = document.getElementById('fd-body');
   const fdMsg = document.getElementById('fd-message');
   const fdTableContainer = document.getElementById('fd-table-container');
+  const fdSourceNote = document.getElementById('fd-source-note');
+  const fdSourceLink = document.getElementById('fd-source-link');
+  const fdOfficialLink = document.getElementById('fd-official-link');
+
+  if (typeof SF6_FRAME_DATA_META !== 'undefined') {
+    if (fdSourceNote) {
+      fdSourceNote.textContent = t('fd_source_note')
+        .replace('{sourceDate}', SF6_FRAME_DATA_META.sourceDate)
+        .replace('{officialUpdateDate}', SF6_FRAME_DATA_META.officialUpdateDate);
+    }
+    if (fdSourceLink) {
+      fdSourceLink.href = SF6_FRAME_DATA_META.sourceUrl;
+      fdSourceLink.textContent = t('fd_source_link');
+    }
+    if (fdOfficialLink) {
+      fdOfficialLink.href = SF6_FRAME_DATA_META.officialUpdateUrl;
+      fdOfficialLink.textContent = t('fd_official_link');
+    }
+  }
 
   function normalize(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -262,28 +322,32 @@ function setupFrameData() {
     
     const fragment = document.createDocumentFragment();
     let matchCount = 0;
-    const MAX_ROWS = 100;
+    const MAX_ROWS = 500;
 
     for(const [char, moves] of Object.entries(SF6_FRAME_DATA)){
-      const charName = char.charAt(0).toUpperCase() + char.slice(1);
+      const charName = typeof SF6_FRAME_DATA_META !== 'undefined'
+        ? SF6_FRAME_DATA_META.characterNames[char] || char
+        : char.charAt(0).toUpperCase() + char.slice(1);
       
       for(const m of moves){
-        const moveText = normalize(`${m.name} ${m.input} ${m.startup} ${m.active} ${m.onBlock} ${m.onHit} ${m.recovery} ${m.notes || ''}`);
+        const moveText = normalize(`${m.name} ${m.input} ${m.startup} ${m.active} ${m.onBlock} ${m.onHit} ${m.onCounterHit} ${m.recovery} ${m.damage} ${m.notes || ''}`);
         if(normalize(charName).includes(q) || moveText.includes(q)) {
           if(matchCount >= MAX_ROWS) break;
           const tr = document.createElement('tr');
           tr.style.cursor = 'pointer';
           tr.style.transition = 'background 0.2s';
           tr.innerHTML = `
-            <td style="padding:8px">${charName}</td>
-            <td style="padding:8px">${m.name}</td>
-            <td style="padding:8px">${m.input}</td>
-            <td style="padding:8px">${m.startup}</td>
-            <td style="padding:8px">${m.active}</td>
-            <td style="padding:8px;color:${getFrameColor(m.onBlock)}">${m.onBlock}</td>
-            <td style="padding:8px;color:${getFrameColor(m.onHit)}">${m.onHit}</td>
-            <td style="padding:8px">${m.recovery}</td>
-            <td style="padding:8px;font-size:12px;color:var(--muted)">${m.notes}</td>
+            <td style="padding:8px">${escapeHtml(charName)}</td>
+            <td style="padding:8px">${escapeHtml(m.name)}</td>
+            <td style="padding:8px">${escapeHtml(m.input)}</td>
+            <td style="padding:8px">${escapeHtml(m.startup)}</td>
+            <td style="padding:8px">${escapeHtml(m.active)}</td>
+            <td style="padding:8px;color:${getFrameColor(m.onBlock)}">${escapeHtml(m.onBlock)}</td>
+            <td style="padding:8px;color:${getFrameColor(m.onHit)}">${escapeHtml(m.onHit)}</td>
+            <td style="padding:8px;color:${getFrameColor(m.onCounterHit)}">${escapeHtml(m.onCounterHit)}</td>
+            <td style="padding:8px">${escapeHtml(m.recovery)}</td>
+            <td style="padding:8px">${escapeHtml(m.damage)}</td>
+            <td style="padding:8px;font-size:12px;color:var(--muted)">${escapeHtml(m.notes)}</td>
           `;
           
           // Add click event to open modal
@@ -326,7 +390,7 @@ function setupFrameData() {
 
 // Helper function for frame advantage colors
 function getFrameColor(val){
-  if(val === '' || val === undefined) return 'inherit';
+  if(val === '' || val === undefined || val === null || val === '—' || val === 'N/A') return 'inherit';
   const n = parseInt(val);
   if(isNaN(n)) return 'inherit';
   if(n > 0) return '#4fd1c5'; // Plus (Cyan)
@@ -426,6 +490,18 @@ function openFrameDataModal(character, move) {
       value: move.onHit,
       class: `code ${getFrameClass(move.onHit)}`,
       interpretation: interpretOnHit(move.onHit)
+    },
+    {
+      field: t('modal_fd_field_counter_hit'),
+      value: move.onCounterHit,
+      class: `code ${getFrameClass(move.onCounterHit)}`,
+      interpretation: interpretOnHit(move.onCounterHit)
+    },
+    {
+      field: t('modal_fd_field_damage'),
+      value: move.damage,
+      class: 'code',
+      interpretation: t('modal_fd_field_damage')
     }
   ];
 
@@ -443,14 +519,14 @@ function openFrameDataModal(character, move) {
     const tr = document.createElement('tr');
     if(row.colspan) {
       tr.innerHTML = `
-        <td>${row.field}</td>
-        <td colspan="2">${row.interpretation}</td>
+        <td>${escapeHtml(row.field)}</td>
+        <td colspan="2">${escapeHtml(row.interpretation)}</td>
       `;
     } else {
       tr.innerHTML = `
-        <td>${row.field}</td>
-        <td class="${row.class}">${row.value}</td>
-        <td>${row.interpretation}</td>
+        <td>${escapeHtml(row.field)}</td>
+        <td class="${escapeHtml(row.class)}">${escapeHtml(row.value)}</td>
+        <td>${escapeHtml(row.interpretation)}</td>
       `;
     }
     modalTbody.appendChild(tr);
@@ -509,7 +585,7 @@ function interpretInput(input) {
 }
 
 function interpretStartup(startup) {
-  if(!startup || startup === 'N/A') return t('not_applicable');
+  if(!startup || startup === 'N/A' || startup === '—') return t('not_applicable');
   const frames = parseInt(startup);
   if(isNaN(frames)) return `${t('modal_fd_field_startup')}: ${startup} frames.`;
   
@@ -524,7 +600,7 @@ function interpretStartup(startup) {
 }
 
 function interpretActive(active) {
-  if(!active || active === 'N/A') return t('active_projectile');
+  if(!active || active === 'N/A' || active === '—') return t('not_applicable');
   
   // Handle ranges like "4-6" or "18-23"
   if(typeof active === 'string' && active.includes('-')) {
@@ -544,7 +620,7 @@ function interpretActive(active) {
 }
 
 function interpretRecovery(recovery) {
-  if(!recovery || recovery === 'N/A') return t('not_applicable');
+  if(!recovery || recovery === 'N/A' || recovery === '—') return t('not_applicable');
   const frames = parseInt(recovery);
   if(isNaN(frames)) return `${t('modal_fd_field_recovery')}: ${recovery} frames.`;
 
@@ -774,14 +850,14 @@ function openComboModal(character, combo) {
     const tr = document.createElement('tr');
     if(row.colspan) {
       tr.innerHTML = `
-        <td>${row.field}</td>
-        <td colspan="2">${row.interpretation}</td>
+        <td>${escapeHtml(row.field)}</td>
+        <td colspan="2">${escapeHtml(row.interpretation)}</td>
       `;
     } else {
       tr.innerHTML = `
-        <td>${row.field}</td>
-        <td class="${row.class}">${row.value}</td>
-        <td>${row.interpretation}</td>
+        <td>${escapeHtml(row.field)}</td>
+        <td class="${escapeHtml(row.class)}">${escapeHtml(row.value)}</td>
+        <td>${escapeHtml(row.interpretation)}</td>
       `;
     }
     modalTbody.appendChild(tr);
@@ -830,6 +906,21 @@ function setupMatchupHelper() {
   const char2Select = document.getElementById('matchup-char2');
   const resultDiv = document.getElementById('matchup-result');
   const emptyDiv = document.getElementById('matchup-empty');
+  const statsCopy = document.getElementById('matchup-stats-copy');
+  const statsLink = document.getElementById('matchup-stats-link');
+  const noteProvenance = document.getElementById('matchup-note-provenance');
+
+  if (typeof SF6_MATCHUP_STATS_META !== 'undefined') {
+    if (statsCopy) {
+      statsCopy.textContent = t('matchup_stats_body')
+        .replace('{period}', SF6_MATCHUP_STATS_META.latestPeriod)
+        .replace('{checkedAt}', SF6_MATCHUP_STATS_META.checkedAt);
+    }
+    if (statsLink) {
+      statsLink.href = SF6_MATCHUP_STATS_META.sourceUrl;
+      statsLink.textContent = t('matchup_stats_link');
+    }
+  }
 
   // Use stable character IDs for data lookup; display names can contain punctuation or spaces.
   const characters = typeof SF6_COMBOS_DATA !== 'undefined'
@@ -882,39 +973,32 @@ function setupMatchupHelper() {
     }
 
     document.getElementById('matchup-title').textContent = `${character1} vs ${character2}`;
-    document.getElementById('matchup-rating').textContent = matchup.rating;
-    
+    document.getElementById('matchup-rating').textContent = t('matchup_stats_external');
+
     const diffBadge = document.getElementById('matchup-difficulty-badge');
-    diffBadge.textContent = matchup.difficulty;
+    diffBadge.textContent = t('matchup_notes_unverified_badge');
     diffBadge.className = 'badge';
-    
-    // Color code difficulty
-    if(matchup.difficulty === 'Advantage') {
-      diffBadge.style.background = 'rgba(74, 222, 128, 0.15)';
-      diffBadge.style.color = '#4ade80';
-      diffBadge.style.border = '1px solid rgba(74, 222, 128, 0.3)';
-    } else if(matchup.difficulty === 'Disadvantage') {
-      diffBadge.style.background = 'rgba(239, 68, 68, 0.15)';
-      diffBadge.style.color = '#ef4444';
-      diffBadge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-    } else {
-      diffBadge.style.background = 'rgba(251, 191, 36, 0.15)';
-      diffBadge.style.color = '#fbbf24';
-      diffBadge.style.border = '1px solid rgba(251, 191, 36, 0.3)';
+    diffBadge.style.background = 'rgba(255, 255, 255, 0.06)';
+    diffBadge.style.color = 'var(--muted)';
+    diffBadge.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+
+    if (noteProvenance) {
+      noteProvenance.textContent = t('matchup_note_provenance')
+        .replace('{direction}', `${character1} vs ${character2}`);
     }
 
     // Populate lists
     const keyPointsList = document.getElementById('matchup-key-points');
-    keyPointsList.innerHTML = matchup.keyPoints.map(point => `<li>${point}</li>`).join('');
+    keyPointsList.innerHTML = matchup.keyPoints.map(point => `<li>${escapeHtml(point)}</li>`).join('');
 
     const tipsList = document.getElementById('matchup-tips');
-    tipsList.innerHTML = matchup.tips.map(tip => `<li>${tip}</li>`).join('');
+    tipsList.innerHTML = matchup.tips.map(tip => `<li>${escapeHtml(tip)}</li>`).join('');
 
     const dangerousList = document.getElementById('matchup-dangerous');
-    dangerousList.innerHTML = matchup.dangerousMoves.map(move => `<li>${move}</li>`).join('');
+    dangerousList.innerHTML = matchup.dangerousMoves.map(move => `<li>${escapeHtml(move)}</li>`).join('');
 
     const toolsList = document.getElementById('matchup-tools');
-    toolsList.innerHTML = matchup.yourTools.map(tool => `<li>${tool}</li>`).join('');
+    toolsList.innerHTML = matchup.yourTools.map(tool => `<li>${escapeHtml(tool)}</li>`).join('');
 
     // Show result
     emptyDiv.style.display = 'none';

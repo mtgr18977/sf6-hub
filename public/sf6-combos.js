@@ -339,6 +339,7 @@ const SF6_ROSTER = [
   ['sagat', 'Sagat'],
   ['c-viper', 'C. Viper'],
   ['alex', 'Alex'],
+  ['arjun', 'Arjun'],
   ['ingrid', 'Ingrid'],
   ['yasmine', 'Yasmine'],
   ['e-honda', 'E. Honda'],
@@ -351,9 +352,46 @@ const SF6_ROSTER = [
   ['luke', 'Luke']
 ];
 
+const SF6_COMBO_DATA_META = {
+  sourceName: 'SF6 Combo Database (community submissions)',
+  sourceUrl: 'https://sf6combo.kagewebsite.com/',
+  checkedAt: '2026-11-12',
+  checkedCharacters: {
+    ryu: {
+      url: 'https://sf6combo.kagewebsite.com/combos-ryu/',
+      status: 'submissions-present'
+    },
+    ken: {
+      url: 'https://sf6combo.kagewebsite.com/combos-ken/',
+      status: 'submissions-present'
+    },
+    arjun: {
+      url: 'https://sf6combo.kagewebsite.com/combos-arjun/',
+      status: 'no-submissions'
+    },
+    yasmine: {
+      url: 'https://sf6combo.kagewebsite.com/combos-yasmine/',
+      status: 'no-submissions'
+    }
+  },
+  localRoutesVerified: false
+};
+
 for (const [key, character] of SF6_ROSTER) {
-  if (SF6_COMBOS_DATA[key]) continue;
-  SF6_COMBOS_DATA[key] = { character, combos: [] };
+  if (!SF6_COMBOS_DATA[key]) SF6_COMBOS_DATA[key] = { character, combos: [] };
+
+  const characterData = SF6_COMBOS_DATA[key];
+  const sourceCheck = SF6_COMBO_DATA_META.checkedCharacters[key];
+  characterData.communitySourceUrl = sourceCheck?.url || SF6_COMBO_DATA_META.sourceUrl;
+  characterData.communitySourceStatus = sourceCheck?.status || 'not-reviewed';
+  characterData.communitySourceCheckedAt = sourceCheck ? SF6_COMBO_DATA_META.checkedAt : null;
+  characterData.verificationStatus = characterData.combos.length ? 'legacy-unverified' : 'not-curated';
+  characterData.combos = characterData.combos.map((combo) => ({
+    ...combo,
+    verificationStatus: 'legacy-unverified',
+    sourceUrl: null,
+    sourceCheckedAt: null
+  }));
 }
 
 // Derived combos object that respects the current language
@@ -366,6 +404,10 @@ function updateCombosLanguage() {
   for (const [key, data] of Object.entries(SF6_COMBOS_DATA)) {
     SF6_COMBOS[key] = {
       character: data.character,
+      verificationStatus: data.verificationStatus,
+      communitySourceUrl: data.communitySourceUrl,
+      communitySourceStatus: data.communitySourceStatus,
+      communitySourceCheckedAt: data.communitySourceCheckedAt,
       combos: data.combos.map(c => ({
         ...c,
         difficulty: c.difficulty[lang] || c.difficulty['en'],
