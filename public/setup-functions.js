@@ -322,7 +322,14 @@ function setupFrameData() {
   const fdFilter = document.getElementById('fd-filter');
   const fdBody = document.getElementById('fd-body');
   const fdMsg = document.getElementById('fd-message');
+  const fdResultCount = document.getElementById('fd-result-count');
   const fdTableContainer = document.getElementById('fd-table-container');
+  const characterSearchAliases = {
+    'c-viper': ['viper'],
+    deejay: ['dj'],
+    'e-honda': ['honda'],
+    'm-bison': ['bison']
+  };
   const fdSourceNote = document.getElementById('fd-source-note');
   const fdSourceLink = document.getElementById('fd-source-link');
   const fdOfficialLink = document.getElementById('fd-official-link');
@@ -347,74 +354,106 @@ function setupFrameData() {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
-  function renderFrameData(query){
-    if(typeof SF6_FRAME_DATA === 'undefined') return;
-    
+  function getCharacterName(char) {
+    if (typeof SF6_FRAME_DATA_META !== 'undefined' && SF6_FRAME_DATA_META.characterNames) {
+      return SF6_FRAME_DATA_META.characterNames[char] || char;
+    }
+    return char.charAt(0).toUpperCase() + char.slice(1);
+  }
+
+  function renderFrameData(query) {
+    if (typeof SF6_FRAME_DATA === 'undefined') return;
+
     const q = normalize(query);
-    fdBody.innerHTML = '';
-    
-    if(q === '') {
+    fdBody.replaceChildren();
+    if (fdResultCount) fdResultCount.textContent = '';
+
+    if (q === '') {
       fdMsg.style.display = 'block';
       fdTableContainer.style.display = 'none';
       fdMsg.textContent = t('fd_initial_msg');
       return;
     }
-    
-    const fragment = document.createDocumentFragment();
-    let matchCount = 0;
-    const MAX_ROWS = 500;
 
-    for(const [char, moves] of Object.entries(SF6_FRAME_DATA)){
-      const charName = typeof SF6_FRAME_DATA_META !== 'undefined'
-        ? SF6_FRAME_DATA_META.characterNames[char] || char
-        : char.charAt(0).toUpperCase() + char.slice(1);
-      
-      for(const m of moves){
-        const moveText = normalize(`${m.name} ${m.input} ${m.startup} ${m.active} ${m.onBlock} ${m.onHit} ${m.onCounterHit} ${m.recovery} ${m.damage} ${m.notes || ''}`);
-        if(normalize(charName).includes(q) || moveText.includes(q)) {
-          if(matchCount >= MAX_ROWS) break;
-          const tr = document.createElement('tr');
-          tr.style.cursor = 'pointer';
-          tr.style.transition = 'background 0.2s';
-          tr.innerHTML = `
-            <td style="padding:8px">${escapeHtml(charName)}</td>
-            <td style="padding:8px">${escapeHtml(m.name)}</td>
-            <td style="padding:8px">${escapeHtml(m.input)}</td>
-            <td style="padding:8px">${escapeHtml(m.startup)}</td>
-            <td style="padding:8px">${escapeHtml(m.active)}</td>
-            <td style="padding:8px;color:${getFrameColor(m.onBlock)}">${escapeHtml(m.onBlock)}</td>
-            <td style="padding:8px;color:${getFrameColor(m.onHit)}">${escapeHtml(m.onHit)}</td>
-            <td style="padding:8px;color:${getFrameColor(m.onCounterHit)}">${escapeHtml(m.onCounterHit)}</td>
-            <td style="padding:8px">${escapeHtml(m.recovery)}</td>
-            <td style="padding:8px">${escapeHtml(m.damage)}</td>
-            <td style="padding:8px;font-size:12px;color:var(--muted)">${escapeHtml(m.notes)}</td>
-          `;
-          
-          // Add click event to open modal
-          tr.addEventListener('click', () => openFrameDataModal(charName, m));
-          tr.addEventListener('mouseenter', () => {
-            tr.style.background = 'rgba(255, 255, 255, 0.03)';
-          });
-          tr.addEventListener('mouseleave', () => {
-            tr.style.background = 'transparent';
-          });
-          
-          fragment.appendChild(tr);
-          matchCount++;
+    const characterEntries = Object.entries(SF6_FRAME_DATA);
+    const matchedCharacterIds = new Set();
+
+    if (q.length >= 2) {
+      for (const [char] of characterEntries) {
+        const nameCandidates = [char, getCharacterName(char), ...(characterSearchAliases[char] || [])]
+          .map(normalize);
+        if (nameCandidates.some(name => name === q || name.startsWith(q) || (q.length >= 4 && name.includes(q)))) {
+          matchedCharacterIds.add(char);
         }
       }
-      if(matchCount >= MAX_ROWS) break;
     }
-    
-    fdBody.appendChild(fragment);
-    
-    if(matchCount === 0){
+
+    const isCharacterSearch = matchedCharacterIds.size > 0;
+    const matches = [];
+
+    for (const [char, moves] of characterEntries) {
+      if (isCharacterSearch && !matchedCharacterIds.has(char)) continue;
+      const charName = getCharacterName(char);
+
+      for (const move of moves) {
+        if (isCharacterSearch) {
+          matches.push({ charName, move });
+          continue;
+        }
+
+        const moveText = normalize(`${move.name} ${move.input} ${move.startup} ${move.active} ${move.onBlock} ${move.onHit} ${move.onCounterHit} ${move.recovery} ${move.damage} ${move.notes || ''}`);
+        if (moveText.includes(q)) matches.push({ charName, move });
+      }
+    }
+
+    if (matches.length === 0) {
       fdMsg.style.display = 'block';
       fdTableContainer.style.display = 'none';
       fdMsg.textContent = t('fd_no_data');
-    } else {
-      fdMsg.style.display = 'none';
-      fdTableContainer.style.display = 'block';
+      return;
+    }
+
+    const MAX_ROWS = 500;
+    const visibleMatches = matches.slice(0, MAX_ROWS);
+    const fragment = document.createDocumentFragment();
+
+    for (const { charName, move } of visibleMatches) {
+      const tr = document.createElement('tr');
+      tr.className = 'frame-data-row';
+      tr.innerHTML = `
+        <td>${escapeHtml(charName)}</td>
+        <td>${escapeHtml(move.name)}</td>
+        <td>${escapeHtml(move.input)}</td>
+        <td>${escapeHtml(move.startup)}</td>
+        <td>${escapeHtml(move.active)}</td>
+        <td style="color:${getFrameColor(move.onBlock)}">${escapeHtml(move.onBlock)}</td>
+        <td style="color:${getFrameColor(move.onHit)}">${escapeHtml(move.onHit)}</td>
+        <td style="color:${getFrameColor(move.onCounterHit)}">${escapeHtml(move.onCounterHit)}</td>
+        <td>${escapeHtml(move.recovery)}</td>
+        <td>${escapeHtml(move.damage)}</td>
+        <td class="fd-notes-cell">${escapeHtml(move.notes || '')}</td>
+      `;
+      tr.addEventListener('click', () => openFrameDataModal(charName, move));
+      fragment.appendChild(tr);
+    }
+
+    fdBody.appendChild(fragment);
+    fdMsg.style.display = 'none';
+    fdTableContainer.style.display = 'block';
+
+    if (fdResultCount) {
+      if (matches.length > MAX_ROWS) {
+        fdResultCount.textContent = t('fd_results_capped')
+          .replace('{count}', visibleMatches.length)
+          .replace('{total}', matches.length);
+      } else if (isCharacterSearch) {
+        const characterNames = [...matchedCharacterIds].map(getCharacterName).join(', ');
+        fdResultCount.textContent = t('fd_character_results')
+          .replace('{count}', matches.length)
+          .replace('{characters}', characterNames);
+      } else {
+        fdResultCount.textContent = t('fd_results_count').replace('{count}', matches.length);
+      }
     }
   }
 

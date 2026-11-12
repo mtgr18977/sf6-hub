@@ -122,48 +122,55 @@ const ContentTemplates = {
   `,
 
   frameData: () => `
-    <h2>${t('fd_title')}</h2>
-    <p style="color:var(--muted);margin-top:0">${t('fd_subtitle')}</p>
-    <p class="coverage-note">${t('fd_coverage').replace('{count}', SF6_FRAME_DATA_META.characterCount).replace('{moves}', SF6_FRAME_DATA_META.moveCount)}</p>
-    <p class="coverage-note" id="fd-source-note"></p>
-    <p style="margin-top:-8px;display:flex;flex-wrap:wrap;gap:12px"><a id="fd-source-link" href="${SF6_FRAME_DATA_META.sourceUrl}" target="_blank" rel="noopener noreferrer">${t('fd_source_link')}</a><a id="fd-official-link" href="${SF6_FRAME_DATA_META.officialUpdateUrl}" target="_blank" rel="noopener noreferrer">${t('fd_official_link')}</a></p>
+    <div class="frame-data-page">
+      <h2>${t('fd_title')}</h2>
+      <p class="frame-data-subtitle">${t('fd_subtitle')}</p>
+      <p class="coverage-note">${t('fd_coverage').replace('{count}', SF6_FRAME_DATA_META.characterCount).replace('{moves}', SF6_FRAME_DATA_META.moveCount)}</p>
+      <p class="coverage-note" id="fd-source-note"></p>
+      <div class="frame-data-source-links">
+        <a id="fd-source-link" href="${SF6_FRAME_DATA_META.sourceUrl}" target="_blank" rel="noopener noreferrer">${t('fd_source_link')}</a>
+        <a id="fd-official-link" href="${SF6_FRAME_DATA_META.officialUpdateUrl}" target="_blank" rel="noopener noreferrer">${t('fd_official_link')}</a>
+      </div>
 
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-      <input id="fd-filter" placeholder="${t('fd_search_placeholder')}" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit" />
-    </div>
+      <div class="frame-data-toolbar" role="search">
+        <input id="fd-filter" class="frame-data-search" type="search" placeholder="${t('fd_search_placeholder')}" aria-label="${t('fd_search_label')}" aria-describedby="fd-result-count" aria-controls="fd-table" autocomplete="off" />
+      </div>
+      <p id="fd-result-count" class="frame-data-result-count" aria-live="polite" aria-atomic="true"></p>
 
-    <div id="fd-message" style="padding:20px;text-align:center;color:var(--muted);font-style:italic">
-      ${t('fd_initial_msg')}
-    </div>
+      <div id="fd-message" class="data-coverage-message frame-data-message" role="status">
+        ${t('fd_initial_msg')}
+      </div>
 
-    <div style="overflow:auto;margin-top:12px;display:none" id="fd-table-container">
-      <table id="fd-table" style="width:100%;border-collapse:collapse;min-width:1250px">
-        <thead>
-          <tr style="text-align:left;color:var(--muted);font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03)">
-            <th style="padding:8px">${t('fd_th_char')}</th>
-            <th style="padding:8px">${t('fd_th_move')}</th>
-            <th style="padding:8px">${t('fd_th_input')}</th>
-            <th style="padding:8px">${t('fd_th_startup')}</th>
-            <th style="padding:8px">${t('fd_th_active')}</th>
-            <th style="padding:8px">${t('fd_th_onblock')}</th>
-            <th style="padding:8px">${t('fd_th_onhit')}</th>
-            <th style="padding:8px">${t('fd_th_counter_hit')}</th>
-            <th style="padding:8px">${t('fd_th_recovery')}</th>
-            <th style="padding:8px">${t('fd_th_damage')}</th>
-            <th style="padding:8px">${t('fd_th_notes')}</th>
-          </tr>
-        </thead>
-        <tbody id="fd-body"></tbody>
-      </table>
-    </div>
+      <div id="fd-table-container" class="frame-data-table-wrap" role="region" aria-label="${t('fd_table_region')}" tabindex="0">
+        <table id="fd-table" class="frame-data-table">
+          <caption class="frame-data-table-caption">${t('fd_table_caption')}</caption>
+          <thead>
+            <tr>
+              <th scope="col">${t('fd_th_char')}</th>
+              <th scope="col">${t('fd_th_move')}</th>
+              <th scope="col">${t('fd_th_input')}</th>
+              <th scope="col">${t('fd_th_startup')}</th>
+              <th scope="col">${t('fd_th_active')}</th>
+              <th scope="col">${t('fd_th_onblock')}</th>
+              <th scope="col">${t('fd_th_onhit')}</th>
+              <th scope="col">${t('fd_th_counter_hit')}</th>
+              <th scope="col">${t('fd_th_recovery')}</th>
+              <th scope="col">${t('fd_th_damage')}</th>
+              <th scope="col">${t('fd_th_notes')}</th>
+            </tr>
+          </thead>
+          <tbody id="fd-body"></tbody>
+        </table>
+      </div>
 
-    <div style="margin-top:20px;padding:16px;background:rgba(79,209,197,0.05);border-radius:10px;border:1px solid rgba(79,209,197,0.15)">
-      <h4 style="margin:0 0 8px;font-size:14px;color:var(--accent)">${t('fd_how_to_title')}</h4>
-      <ul style="margin:8px 0;padding-left:20px;font-size:13px;color:var(--muted);line-height:1.6">
-        <li>${t('fd_how_to_1')}</li>
-        <li>${t('fd_how_to_2')}</li>
-        <li>${t('fd_how_to_3')}</li>
-      </ul>
+      <div class="data-coverage-message frame-data-help">
+        <h4>${t('fd_how_to_title')}</h4>
+        <ul>
+          <li>${t('fd_how_to_1')}</li>
+          <li>${t('fd_how_to_2')}</li>
+          <li>${t('fd_how_to_3')}</li>
+        </ul>
+      </div>
     </div>
   `,
 
