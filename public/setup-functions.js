@@ -117,6 +117,15 @@ function escapeHtml(value) {
   })[character]);
 }
 
+function safeExternalUrl(value, allowedHost) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === allowedHost ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
 function setupCombos() {
   const comboCharSelect = document.getElementById('combo-character-select');
   const comboDiffFilter = document.getElementById('combo-difficulty-filter');
@@ -139,8 +148,8 @@ function setupCombos() {
   function updateSourceState(charData) {
     if (!comboSourceNote || !comboSourceLink) return;
 
-    const sourceUrl = charData?.communitySourceUrl || SF6_COMBO_DATA_META.sourceUrl;
-    comboSourceLink.href = sourceUrl;
+    const sourceUrl = safeExternalUrl(charData?.communitySourceUrl || SF6_COMBO_DATA_META.sourceUrl, 'sf6combo.kagewebsite.com');
+    comboSourceLink.href = sourceUrl || SF6_COMBO_DATA_META.sourceUrl;
     comboSourceLink.textContent = t('combos_source_link');
 
     if (!charData) {
@@ -148,15 +157,38 @@ function setupCombos() {
       return;
     }
 
-    const count = Array.isArray(charData.combos) ? charData.combos.length : 0;
-    if (count > 0) {
+    const combos = Array.isArray(charData.combos) ? charData.combos : [];
+    const communityCount = combos.filter((combo) => Boolean(combo.sourceUrl && combo.sourceDate)).length;
+    const legacyCount = combos.length - communityCount;
+
+    if (communityCount > 0 && legacyCount > 0) {
+      comboSourceNote.textContent = t('combos_source_mixed')
+        .replace('{community}', communityCount)
+        .replace('{legacy}', legacyCount)
+        .replace('{character}', charData.character);
+    } else if (communityCount > 0) {
+      comboSourceNote.textContent = t('combos_source_community')
+        .replace('{count}', communityCount)
+        .replace('{published}', charData.communityPublishedRouteCount || communityCount)
+        .replace('{character}', charData.character)
+        .replace('{date}', charData.communityLatestSourceDate || '');
+    } else if (legacyCount > 0 && charData.communitySourceStatus === 'no-submissions') {
+      comboSourceNote.textContent = t('combos_source_legacy_no_community')
+        .replace('{count}', legacyCount)
+        .replace('{character}', charData.character)
+        .replace('{checkedAt}', charData.communitySourceCheckedAt || SF6_COMBO_DATA_META.checkedAt);
+    } else if (legacyCount > 0) {
       comboSourceNote.textContent = t('combos_source_legacy')
-        .replace('{count}', count)
+        .replace('{count}', legacyCount)
         .replace('{character}', charData.character);
     } else if (charData.communitySourceStatus === 'no-submissions') {
       comboSourceNote.textContent = t('combos_source_empty_checked')
         .replace('{character}', charData.character)
         .replace('{checkedAt}', charData.communitySourceCheckedAt || SF6_COMBO_DATA_META.checkedAt);
+    } else if (charData.communitySourceStatus === 'parse-incomplete') {
+      comboSourceNote.textContent = t('combos_source_parse_error')
+        .replace('{character}', charData.character)
+        .replace('{count}', charData.communityPublishedRouteCount || 0);
     } else {
       comboSourceNote.textContent = t('combos_source_empty').replace('{character}', charData.character);
     }
@@ -202,12 +234,18 @@ function setupCombos() {
       card.className = 'combo-card';
       
       const diffClass = combo.difficulty.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]/g, '');
+      const sourceUrl = safeExternalUrl(combo.sourceUrl, 'sf6combo.kagewebsite.com');
+      const sourceDate = currentLang === 'pt-BR' ? combo.sourceDateDisplayPt : combo.sourceDateDisplay;
+      const verificationLabel = sourceUrl ? t('combo_community_badge') : t('combo_legacy_badge');
+      const sourceCitation = sourceUrl
+        ? `<a class="combo-source-citation" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${t('combo_source_citation').replace('{author}', escapeHtml(combo.sourceAuthor || 'community')).replace('{date}', escapeHtml(sourceDate || ''))}</a>`
+        : `<span class="combo-source-citation">${t('combo_legacy_badge')}</span>`;
       
       card.innerHTML = `
         <div class="combo-header">
           <div class="combo-title">${escapeHtml(combo.combo)}</div>
           <span class="difficulty-badge ${diffClass}">${escapeHtml(combo.difficulty)}</span>
-          <span class="badge">${t('combo_legacy_badge')}</span>
+          <span class="badge">${verificationLabel}</span>
         </div>
         <div class="combo-notation">${escapeHtml(combo.notation)}</div>
         <div class="combo-info">
@@ -222,11 +260,13 @@ function setupCombos() {
           </div>
         </div>
         <div class="combo-notes">${escapeHtml(combo.notes)}</div>
+        <div class="combo-source-row">${sourceCitation}</div>
       `;
 
       card.addEventListener('click', () => {
         openComboModal(charData.character, combo);
       });
+      card.querySelector('.combo-source-citation')?.addEventListener('click', (event) => event.stopPropagation());
 
       comboList.appendChild(card);
     });
@@ -293,14 +333,14 @@ function setupFrameData() {
         .replace('{sourceDate}', SF6_FRAME_DATA_META.sourceDate)
         .replace('{officialUpdateDate}', SF6_FRAME_DATA_META.officialUpdateDate);
     }
-    if (fdSourceLink) {
-      fdSourceLink.href = SF6_FRAME_DATA_META.sourceUrl;
-      fdSourceLink.textContent = t('fd_source_link');
-    }
-    if (fdOfficialLink) {
-      fdOfficialLink.href = SF6_FRAME_DATA_META.officialUpdateUrl;
-      fdOfficialLink.textContent = t('fd_official_link');
-    }
+  if (fdSourceLink) {
+    fdSourceLink.href = safeExternalUrl(SF6_FRAME_DATA_META.sourceUrl, 'github.com') || 'https://github.com';
+    fdSourceLink.textContent = t('fd_source_link');
+  }
+  if (fdOfficialLink) {
+    fdOfficialLink.href = safeExternalUrl(SF6_FRAME_DATA_META.officialUpdateUrl, 'www.streetfighter.com') || 'https://www.streetfighter.com/6/buckler/en-us/information';
+    fdOfficialLink.textContent = t('fd_official_link');
+  }
   }
 
   function normalize(value) {
